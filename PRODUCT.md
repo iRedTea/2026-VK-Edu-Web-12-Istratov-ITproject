@@ -214,3 +214,303 @@ Deep анализ архитектуры уровня senior## MVP
 | НФ требования      | Быстродействие, масштабируемость, безопасность |
 
 <img src="diag1.png">
+
+
+## Доменные зоны Domain-Driven Design
+
+### Code Analysis Domain
+
+Описание:
+Отвечает за анализ кода, поиск ошибок и генерацию рекомендаций.
+
+Глоссарий:
+```
+Analysis — процесс проверки кода
+Issue — найденная проблема
+Suggestion — рекомендация по исправлению
+Severity — уровень критичности
+```
+### Integration Domain
+
+Описание:
+Интеграция с Git-платформами через API/webhooks.
+
+Глоссарий:
+```
+Webhook — событие от Git-системы
+Repository — репозиторий
+Pull Request (PR) — запрос на слияние
+Access Token — ключ доступа
+```
+### Review Management Domain
+
+Описание:
+Управление результатами ревью и их отображением.
+
+Глоссарий:
+```
+Review — результат анализа
+Comment — комментарий к коду
+Thread — цепочка обсуждений
+Status — статус ревью
+```
+### User & Access Domain
+
+Описание:
+Управление пользователями и правами.
+
+Глоссарий:
+```
+User — пользователь
+Role — роль (dev, admin и т.д.)
+Permission — разрешение
+Organization — компания
+```
+### Billing Domain
+
+Описание:
+Подписки и оплата.
+
+Глоссарий:
+```
+Subscription — подписка
+Plan — тариф
+Usage — использование
+Invoice — счёт
+```
+
+## Behavior-Driven Development - 1 Критический путь MVP
+Сценарий успеха
+
+Feature: Автоматическое ревью кода
+```
+Сценарий: Успешный анализ Pull Request
+  разработчик создал Pull Request
+  система подключена к Git-платформе
+  Git отправляет webhook в систему
+  Система анализирует код
+  Публикует комментарии в Pull Request
+```
+
+Сценарий отказа
+```
+Сценарий: Ошибка анализа кода
+  Разработчик создал Pull Request
+  Система получает webhook
+  Происходит ошибка анализа
+  Система отправляет сообщение об ошибке
+  Не публикует комментарии
+```
+## Wireframes 2 ключевых экрана в приложении
+--------------------------------------------------
+| Pull Request: feature/login                    |
+--------------------------------------------------
+| File: file1.java                              |
+|                                                |
+|  > AI: Possible null pointer (HIGH)            |
+|  > AI: Simplify condition (LOW)                |
+|                                                |
+--------------------------------------------------
+| File: file2.java                              |
+|                                                |
+|  > AI: Unused variable                         |
+|                                                |
+--------------------------------------------------
+| [ Approve ]        [ Request Changes ]         |
+--------------------------------------------------
+
+--------------------------------------------------
+| Integration Settings                           |
+--------------------------------------------------
+| Git Platform: [ GitLab ▼ ]                     |
+| Repository:   [ my-project ]                   |
+| Token:        [ ************* ]                |
+|                                                |
+| [ Test Connection ]                            |
+| [ Enable AI Review ]                           |
+--------------------------------------------------
+## API-First - JSON REST API для главных ручек
+
+### Анализ PR
+
+POST /analyze
+
+Request:
+```json
+{
+  "repository": "my-project",
+  "pr_id": 123,
+  "diff": "string with code diff"
+}
+```
+
+Response:
+```json
+{
+  "review_id": "rev_456",
+  "issues": [
+    {
+      "file": "file1.java",
+      "line": 42,
+      "message": "Possible null pointer exception",
+      "severity": "HIGH"
+    }
+  ]
+}
+```
+
+### Отправка комментариев
+
+POST /comment
+
+Request:
+```json
+{
+  "review_id": "rev_456",
+  "comments": [
+    {
+      "file": "file1.java",
+      "line": 42,
+      "text": "Check null before usage"
+    }
+  ]
+}
+```
+
+Response:
+```json
+{
+  "status": "success"
+}
+```
+
+## Схема C4
+
+### Уровень 1 — Контекст (System Context)
+
+**Система:** AI AutoReview
+
+**Акторы и внешние системы:**
+
+- **Developer**
+  - создаёт Pull Request
+  - получает AI-комментарии
+
+- **Team Lead**
+  - просматривает AI-ревью
+  - принимает решение о merge
+
+- **Git Platform (GitLab / GitHub / Bitbucket / корпоративные Git)**
+  - отправляет webhook (событие PR)
+  - принимает комментарии
+
+- **AI Provider (LLM API / локальная модель)**
+  - анализирует код
+  - возвращает рекомендации
+
+- **DevOps / Администратор**
+  - настраивает интеграцию
+  - управляет доступами
+
+
+#### Контекстная диаграмма
+
+<img src="diag2.png">
+
+---
+
+### Уровень 2 — Контейнеры (Container Diagram)
+
+**Контейнеры системы:**
+
+- **API Backend**
+  - обработка webhook
+  - бизнес-логика
+  - оркестрация AI
+
+- **AI Analysis Service**
+  - анализ diff
+  - генерация prompt
+  - работа с LLM
+
+- **Integration Service**
+  - работа с Git API
+  - отправка комментариев
+
+- **Database (PostgreSQL)**
+  - хранение ревью, пользователей, настроек
+
+- **Frontend (React, опционально)**
+  - UI, дашборд, настройки
+
+- **Message Queue (Redis / RabbitMQ)**
+  - асинхронная обработка PR
+
+
+#### Контейнерная диаграмма
+
+<img src="diag3.png">
+
+---
+
+## Стек
+
+### Backend
+**Node.js (NestJS) / Python (FastAPI)**  
+- быстрое MVP  
+- удобная работа с API  
+- простая интеграция с AI  
+
+---
+
+### AI
+**OpenAI API / локальные LLM (LLaMA, Mistral)**  
+- не требуется обучение модели  
+- быстрый запуск  
+- масштабируемость  
+
+---
+
+### База данных
+**PostgreSQL**  
+- надёжность  
+- удобная структура данных  
+- поддержка сложных запросов  
+
+---
+
+### Очереди
+**Redis + BullMQ / RabbitMQ**  
+- асинхронная обработка  
+- выдерживает высокую нагрузку  
+- повышает отказоустойчивость  
+
+---
+
+### Интеграция
+**Git API + Webhooks**  
+- стандартный механизм  
+- легко реализуется  
+- подходит для MVP  
+
+---
+
+### Frontend (MLP)
+**React (Next.js)**  
+- быстрый UI  
+- удобен для дашбордов  
+- SSR при необходимости  
+
+---
+
+### Инфраструктура
+- Docker  
+- Kubernetes (на этапе масштабирования)  
+- CI/CD (GitLab CI / GitHub Actions)  
+
+---
+
+### Безопасность
+- Token-based доступ  
+- OAuth (при необходимости)  
+- Read-only доступ к репозиториям  
